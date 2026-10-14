@@ -13,7 +13,6 @@ class GameViewModel : ViewModel() {
     private var secretNumber: Int = generateSecretNumber()
 
     private val _uiState = MutableStateFlow(GameUiState())
-
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
     private fun generateSecretNumber(): Int {
@@ -21,17 +20,17 @@ class GameViewModel : ViewModel() {
     }
 
     fun updateUserGuess(guess: String) {
-        _uiState.update { currentState ->
-            currentState.copy(userGuess = guess)
+        _uiState.update { state ->
+            state.copy(userGuess = guess)
         }
     }
 
     fun checkGuess() {
-        val currentState = _uiState.value
+        val state = _uiState.value
 
-        if (currentState.isGameOver) return
+        if (state.isGameOver) return
 
-        val guess = currentState.userGuess.toIntOrNull()
+        val guess = state.userGuess.toIntOrNull()
 
         if (guess == null || guess !in 0..100) {
             _uiState.update {
@@ -42,48 +41,78 @@ class GameViewModel : ViewModel() {
             return
         }
 
-        val newAttemptsLeft = currentState.attemptsLeft - 1
+        // Mencegah tebakan di luar rentang petunjuk saat ini.
+        if (guess <= state.lowerBound || guess >= state.upperBound) {
+            _uiState.update {
+                it.copy(
+                    message = "Pilih angka di dalam rentang yang tersedia!"
+                )
+            }
+            return
+        }
+
+        val newAttemptsLeft = state.attemptsLeft - 1
+        val newGuessesMade = state.guessesMade + 1
 
         if (guess == secretNumber) {
             _uiState.update {
                 it.copy(
                     attemptsLeft = newAttemptsLeft,
+                    guessesMade = newGuessesMade,
                     message = "Selamat! Tebakan kamu benar!",
                     isGameOver = true,
-                    isWon = true
+                    isWon = true,
+                    secretNumber = secretNumber
                 )
             }
-        } else {
-            val newScore = (currentState.score - 10).coerceAtLeast(0)
+            return
+        }
 
-            val hint = if (guess < secretNumber) {
-                "Terlalu kecil!"
-            } else {
-                "Terlalu besar!"
-            }
+        val newScore = (state.score - 10).coerceAtLeast(0)
+        val newLowerBound =
+            if (guess < secretNumber) guess else state.lowerBound
+        val newUpperBound =
+            if (guess > secretNumber) guess else state.upperBound
 
-            val gameOver = newAttemptsLeft == 0 || newScore == 0
+        val gameOver = newAttemptsLeft == 0
 
-            _uiState.update {
-                it.copy(
-                    score = newScore,
-                    attemptsLeft = newAttemptsLeft,
-                    userGuess = "",
-                    message = if (gameOver) {
-                        "Permainan berakhir! Angka rahasianya $secretNumber."
-                    } else {
-                        hint
-                    },
-                    isGameOver = gameOver,
-                    isWon = false
-                )
-            }
+        _uiState.update {
+            it.copy(
+                score = newScore,
+                attemptsLeft = newAttemptsLeft,
+                guessesMade = newGuessesMade,
+                userGuess = "",
+                lowerBound = newLowerBound,
+                upperBound = newUpperBound,
+                message = if (gameOver) {
+                    "Kesempatan habis!"
+                } else {
+                    "Coba tebak lagi!"
+                },
+                isGameOver = gameOver,
+                isWon = false,
+                secretNumber = if (gameOver) secretNumber else null
+            )
+        }
+    }
+
+    fun surrenderGame() {
+        val state = _uiState.value
+        if (state.isGameOver) return
+
+        _uiState.update {
+            it.copy(
+                isGameOver = true,
+                isWon = false,
+                isSurrendered = true,
+                secretNumber = secretNumber,
+                message = "Kamu menyerah!"
+            )
         }
     }
 
     fun resetGame() {
         secretNumber = generateSecretNumber()
-
         _uiState.value = GameUiState()
     }
 }
