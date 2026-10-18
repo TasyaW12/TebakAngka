@@ -1,4 +1,3 @@
-
 package com.example.tebakangka
 
 import android.os.Bundle

@@ -48,18 +48,35 @@ fun GameScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+
+
         if (!state.isGameOver) {
             Text(
                 text = "TEBAK ANGKA",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Color.White,
+                        RoundedCornerShape(20.dp)
+                    )
+                    .padding(12.dp),
+                textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF353631)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Temukan angka rahasia dari 0 sampai 100!",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Color.White,
+                        RoundedCornerShape(20.dp)
+                    )
+                    .padding(12.dp),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color(0xFF73776C)
